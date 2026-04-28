@@ -42,7 +42,7 @@ The status-bar title always shows your **5-hour** percent. You can pin extra met
 Requires macOS 12+ and Python 3.9+.
 
 ```bash
-git clone https://github.com/avikorlansky-bot/claude-usage-monitor.git
+git clone https://github.com/avikorlansky/claude-usage-monitor.git
 cd claude-usage-monitor
 ./build.sh
 open "Claude Usage Monitor.app"
