@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Connect to Claude</title>
+<style>
+  :root {
+    --bg: #0F0F10;
+    --bg-2: #161618;
+    --fg: #E9E9EE;
+    --fg-dim: #9A9AA3;
+    --fg-faint: #6B6B74;
+    --bar-bg: #232327;
+    --accent: #E11D74;
+    --accent-soft: #B6195F;
+    --border: #232327;
+    --ok: #3DDC97;
+    --err: #FF6B6B;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg); color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, sans-serif;
+    font-size: 13px; -webkit-font-smoothing: antialiased;
+    height: 100vh; overflow: hidden;
+  }
+  .app {
+    height: 100%;
+    padding: 22px 26px;
+    display: flex; flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+  }
+  h1 {
+    font-size: 17px; margin: 0; font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .subtitle { color: var(--fg-dim); font-size: 12.5px; margin-top: -8px; line-height: 1.45; }
+  .block {
+    background: var(--bg-2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px;
+  }
+  ol { margin: 0; padding-left: 20px; line-height: 1.55; }
+  ol li { margin-bottom: 4px; color: var(--fg-dim); }
+  ol li b { color: var(--fg); font-weight: 500; }
+  code {
+    background: #1c1c20;
+    padding: 1px 5px; border-radius: 4px;
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 11.5px;
+    color: #ffd2e7;
+  }
+  .btn {
+    background: var(--accent);
+    color: white; border: none;
+    padding: 9px 14px; border-radius: 8px;
+    font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: background 0.15s, transform 0.05s;
+  }
+  .btn:hover { background: var(--accent-soft); }
+  .btn:active { transform: translateY(1px); }
+  .btn.secondary {
+    background: transparent; color: var(--fg);
+    border: 1px solid var(--border);
+  }
+  .btn.secondary:hover { background: var(--bar-bg); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.big {
+    width: 100%; padding: 12px 16px;
+    font-size: 14px; font-weight: 600;
+  }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  textarea, input {
+    width: 100%;
+    background: #1c1c20;
+    border: 1px solid var(--border);
+    color: var(--fg);
+    border-radius: 8px;
+    padding: 9px 11px;
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 11.5px;
+    resize: none;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  textarea:focus, input:focus { border-color: var(--accent); }
+  textarea { min-height: 64px; }
+  .status {
+    font-size: 12px; min-height: 16px;
+    color: var(--fg-dim);
+    white-space: pre-wrap; line-height: 1.5;
+  }
+  .status.ok { color: var(--ok); }
+  .status.err { color: var(--err); }
+  .grow { flex: 1; }
+  .small { font-size: 11.5px; color: var(--fg-faint); margin-top: 4px; }
+  .pill {
+    display: inline-block;
+    background: rgba(225, 29, 116, 0.12);
+    color: #ff7ab3;
+    border-radius: 999px;
+    font-size: 10.5px; padding: 1px 8px;
+    margin-left: 6px; vertical-align: middle;
+  }
+  details.manual {
+    background: var(--bg-2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 0;
+  }
+  details.manual > summary {
+    list-style: none; cursor: pointer;
+    padding: 12px 16px;
+    color: var(--fg-dim); font-size: 12.5px;
+    user-select: none;
+  }
+  details.manual > summary::-webkit-details-marker { display: none; }
+  details.manual > summary::before {
+    content: "▸"; display: inline-block; margin-right: 8px;
+    color: var(--fg-faint); transition: transform 0.15s;
+  }
+  details.manual[open] > summary::before { transform: rotate(90deg); }
+  details.manual > .manual-body { padding: 0 16px 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Connect to Claude<span class="pill">one-time</span></h1>
+  <p class="subtitle">
+    Sign in to claude.ai in any browser, then click below — we'll detect your
+    session automatically. macOS may ask once for permission to read your
+    browser's cookies; click <b>Always Allow</b>.
+  </p>
+
+  <div class="row">
+    <button class="btn secondary" id="openClaudeBtn">Open claude.ai in my default browser</button>
+  </div>
+
+  <button class="btn big" id="autoBtn">Detect my session</button>
+
+  <div class="status" id="status"></div>
+
+  <div id="fdaHelp" style="display:none;" class="block">
+    <div style="font-weight:500;margin-bottom:6px;">Enable Safari detection</div>
+    <div class="small" style="margin-bottom:10px;color:var(--fg-dim);">
+      macOS blocks Safari's cookie file unless this app has Full Disk Access.
+      Click below, drag <b>Claude Usage Monitor.app</b> into the list, toggle it
+      <b>on</b>, then come back and click "Detect my session" again.
+    </div>
+    <button class="btn secondary" id="fdaBtn">Open Full Disk Access settings</button>
+  </div>
+
+  <details class="manual" id="manualFallback">
+    <summary>Having trouble? Paste manually instead</summary>
+    <div class="manual-body">
+      <div class="block">
+        <ol>
+          <li><b>Open claude.ai in your browser</b> and make sure you're signed in.</li>
+          <li>Open <b>Developer Tools</b> &mdash; <code>⌘ + Option + I</code> on macOS.</li>
+          <li>Go to the <b>Application</b> tab (Chrome/Brave/Edge) or <b>Storage</b> tab (Safari/Firefox).</li>
+          <li>In the left sidebar, expand <b>Cookies → https://claude.ai</b>.</li>
+          <li>Find the row named <code>sessionKey</code>, double-click its <b>Value</b>, and copy it.</li>
+          <li>Paste it below and click <b>Connect</b>.</li>
+        </ol>
+      </div>
+
+      <div>
+        <label for="key" style="display:block;margin-bottom:6px;font-weight:500;">sessionKey</label>
+        <textarea id="key" placeholder="sk-ant-sid01-..." spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+        <div class="small">Tip: the value usually starts with <code>sk-ant-sid01-</code>. Don't copy the quotation marks if any.</div>
+      </div>
+
+      <div class="row">
+        <button class="btn" id="connectBtn">Connect</button>
+        <button class="btn secondary" id="cancelBtn">Cancel</button>
+      </div>
+    </div>
+  </details>
+</div>
+
+<script>
+  const $ = sel => document.querySelector(sel);
+  const status = $('#status');
+  const connectBtn = $('#connectBtn');
+  const autoBtn = $('#autoBtn');
+
+  function setStatus(text, kind = '') {
+    status.textContent = text;
+    status.className = 'status ' + kind;
+  }
+
+  async function whenReady() {
+    let tries = 0;
+    while (!(window.pywebview && window.pywebview.api) && tries < 50) {
+      await new Promise(r => setTimeout(r, 100)); tries++;
+    }
+  }
+
+  $('#openClaudeBtn').addEventListener('click', async () => {
+    await whenReady();
+    if (window.pywebview?.api?.open_claude_in_browser) {
+      await window.pywebview.api.open_claude_in_browser();
+      setStatus('Opened claude.ai in your default browser. Sign in there, then come back and click "Detect my session".', 'ok');
+    }
+  });
+
+  function buildFailureMessage(r) {
+    const parts = [];
+    if (r.expired && r.expired.length) {
+      parts.push(
+        `Found a session in ${r.expired.join(' & ')}, but it's expired. ` +
+        `Sign in to claude.ai again in ${r.expired[0]}, then click "Detect my session".`
+      );
+    }
+    if (r.permission_blocked && r.permission_blocked.length) {
+      parts.push(
+        `${r.permission_blocked.join(' & ')} cookies are locked by macOS. ` +
+        `Grant Full Disk Access below, then try again.`
+      );
+    }
+    if (parts.length === 0) {
+      parts.push(
+        'No signed-in claude.ai session found. ' +
+        'Open claude.ai in a browser and sign in, then click "Detect my session".'
+      );
+    }
+    return parts.join('\n');
+  }
+
+  autoBtn.addEventListener('click', async () => {
+    await whenReady();
+    setStatus('Looking for a signed-in claude.ai session...', '');
+    autoBtn.disabled = true;
+    document.querySelector('#fdaHelp').style.display = 'none';
+    try {
+      const r = await window.pywebview.api.auto_detect_session_key();
+      if (r.status === 'ok') {
+        setStatus(`Connected (via ${r.browser}). Closing...`, 'ok');
+        setTimeout(() => window.pywebview.api.finish_login(), 700);
+        return;
+      }
+      setStatus(buildFailureMessage(r), 'err');
+      autoBtn.disabled = false;
+      if (r.permission_blocked && r.permission_blocked.length) {
+        document.querySelector('#fdaHelp').style.display = 'block';
+      }
+      const det = document.querySelector('#manualFallback');
+      if (det) det.open = true;
+    } catch (e) {
+      setStatus(String(e), 'err');
+      autoBtn.disabled = false;
+    }
+  });
+
+  $('#fdaBtn').addEventListener('click', async () => {
+    await whenReady();
+    if (window.pywebview?.api?.open_fda_settings) {
+      await window.pywebview.api.open_fda_settings();
+    }
+  });
+
+  $('#cancelBtn').addEventListener('click', async () => {
+    await whenReady();
+    window.pywebview.api.cancel_login();
+  });
+
+  connectBtn.addEventListener('click', async () => {
+    const raw = $('#key').value.trim().replace(/^["']|["']$/g, '');
+    if (!raw) { setStatus('Paste your sessionKey first.', 'err'); return; }
+    if (raw.length < 30) { setStatus("That doesn't look right - check you copied the full value.", 'err'); return; }
+
+    connectBtn.disabled = true;
+    setStatus('Verifying...', '');
+
+    await whenReady();
+    try {
+      const result = await window.pywebview.api.submit_session_key(raw);
+      if (result.status === 'ok') {
+        if (result.message && result.message.length) {
+          setStatus(result.message, 'ok');
+          setTimeout(() => window.pywebview.api.finish_login(), 2200);
+        } else {
+          setStatus('Connected! Closing...', 'ok');
+          setTimeout(() => window.pywebview.api.finish_login(), 600);
+        }
+      } else {
+        setStatus(result.message || 'Could not verify the key.', 'err');
+        connectBtn.disabled = false;
+      }
+    } catch (e) {
+      setStatus(String(e), 'err');
+      connectBtn.disabled = false;
+    }
+  });
+
+  $('#key').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      connectBtn.click();
+    }
+  });
+</script>
+</body>
+</html>
