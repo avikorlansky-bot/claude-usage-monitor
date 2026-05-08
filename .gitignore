@@ -1,0 +1,29 @@
+# macOS noise
+.DS_Store
+._*
+
+# The built .app bundle is produced by build.sh — don't check it in.
+# Releases on GitHub host the pre-built artifact for download.
+Claude Usage Monitor.app/
+
+# Local Claude Code session settings
+.claude/
+
+# Python bytecode / virtualenvs (none should exist here, but just in case)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Editor / OS junk
+.idea/
+.vscode/
+*.swp
+*~
+
+# App runtime files (these live in ~/.claude-usage-monitor/ at runtime,
+# but listing them defensively in case anyone copies them into the repo
+# during debugging)
+debug.log
+cookies.json
+config.json
